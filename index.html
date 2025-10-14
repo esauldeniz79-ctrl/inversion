@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulador de Rendimiento de Inversión</title>
+<style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #e0f7fa, #e8f5e9);
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        min-height: 100vh;
+    }
+
+    .container {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        padding: 30px;
+        margin-top: 40px;
+        width: 90%;
+        max-width: 700px;
+        text-align: center;
+    }
+
+    h2 {
+        color: #00796b;
+        margin-bottom: 10px;
+    }
+
+    label {
+        display: block;
+        text-align: left;
+        margin-top: 15px;
+        font-weight: 600;
+        color: #004d40;
+    }
+
+    input[type="number"], input[type="text"] {
+        width: 100%;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid #b2dfdb;
+        margin-top: 5px;
+        font-size: 16px;
+        transition: all 0.2s ease-in-out;
+    }
+
+    input:focus {
+        border-color: #00796b;
+        box-shadow: 0 0 5px rgba(0,121,107,0.3);
+        outline: none;
+    }
+
+    button {
+        background: linear-gradient(90deg, #00796b, #26a69a);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 12px 25px;
+        margin-top: 25px;
+        font-size: 17px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+
+    button:hover {
+        background: linear-gradient(90deg, #004d40, #009688);
+        transform: scale(1.05);
+    }
+
+    table {
+        width: 100%;
+        margin-top: 25px;
+        border-collapse: collapse;
+        font-size: 15px;
+    }
+
+    th {
+        background-color: #00796b;
+        color: white;
+        padding: 10px;
+    }
+
+    td {
+        border: 1px solid #b2dfdb;
+        padding: 8px;
+        text-align: center;
+    }
+
+    tr:nth-child(even) {
+        background-color: #f1f8e9;
+    }
+
+    tr:hover {
+        background-color: #e0f2f1;
+    }
+
+    tr[style*='background-color'] {
+        font-weight: bold;
+        color: #33691e;
+    }
+
+    #resultado {
+        margin-top: 20px;
+        text-align: left;
+    }
+
+    .resumen {
+        background: #e8f5e9;
+        padding: 15px;
+        border-radius: 10px;
+        margin-top: 20px;
+        border-left: 5px solid #00796b;
+    }
+
+    .resumen b {
+        color: #004d40;
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h2>📈 Simulador de Rendimiento de Inversión</h2>
+    <p style="color:#004d40; font-size:15px;">Calcula el crecimiento de tu inversión mensual con interés compuesto y añade capital extra cuando desees.</p>
+
+    <label>Meses de inversión:</label>
+    <input type="number" id="meses" placeholder="Ejemplo: 10">
+
+    <label>Monto adicional a invertir:</label>
+    <input type="number" id="montoExtra" placeholder="Ejemplo: 20000">
+
+    <label>Meses donde se agregará esa inversión (separados por coma):</label>
+    <input type="text" id="mesesExtra" placeholder="Ejemplo: 1, 5, 8">
+
+    <button onclick="calcularRendimiento()">💰 Calcular / Agregar inversión</button>
+
+    <div id="resultado"></div>
+</div>
+
+<script>
+let capitalAcumuladoGlobal = 100000; 
+let inversionesExtrasGuardadas = {}; 
+let mesesTotales = 0; 
+
+function calcularRendimiento() {
+    const depositoMensual = 60000;
+    const interesAnual = 7.15;
+    const mesesIngresados = parseInt(document.getElementById("meses").value);
+    const montoExtra = parseFloat(document.getElementById("montoExtra").value);
+    const mesesExtraTexto = document.getElementById("mesesExtra").value.trim();
+
+    if (isNaN(mesesIngresados) || mesesIngresados <= 0) {
+        document.getElementById("resultado").innerHTML = "<p style='color:red;'>⚠️ Por favor ingresa un número válido de meses.</p>";
+        return;
+    }
+
+    const interesMensual = interesAnual / 12 / 100;
+    mesesTotales = Math.min(mesesIngresados, 10);
+
+    if (mesesExtraTexto !== "" && !isNaN(montoExtra) && montoExtra > 0) {
+        let mesesExtra = mesesExtraTexto.split(",").map(m => parseInt(m.trim())).filter(n => !isNaN(n));
+        mesesExtra.forEach(mes => {
+            if (!inversionesExtrasGuardadas[mes]) inversionesExtrasGuardadas[mes] = 0;
+            inversionesExtrasGuardadas[mes] += montoExtra;
+        });
+    }
+
+    let capital = 100000;
+    let tabla = "<table><tr><th>Mes</th><th>Capital</th><th>Interés</th><th>Capital Acumulado</th></tr>";
+
+    for (let i = 1; i <= mesesTotales; i++) {
+        let inversionExtra = inversionesExtrasGuardadas[i] ? inversionesExtrasGuardadas[i] : 0;
+        if (inversionExtra > 0) {
+            capital += inversionExtra;
+        }
+
+        let interes = capital * interesMensual;
+        let capitalAcumulado = capital + interes;
+
+        let estiloFila = inversionExtra > 0 ? "style='background-color:#fff9c4;'" : "";
+
+        tabla += `<tr ${estiloFila}>
+            <td>${inversionExtra > 0 ? "💰 Mes " + i + " (+" + inversionExtra.toLocaleString() + ")" : i}</td>
+            <td>$${capital.toFixed(2)}</td>
+            <td>$${interes.toFixed(2)}</td>
+            <td>$${capitalAcumulado.toFixed(2)}</td>
+        </tr>`;
+
+        capital = capitalAcumulado + depositoMensual;
+    }
+
+    capitalAcumuladoGlobal = capital;
+    tabla += "</table>";
+
+    let resumen = `<div class='resumen'>
+        <b>Capital inicial:</b> $100,000<br>
+        <b>Depósito mensual:</b> $60,000<br>
+        <b>Interés anual:</b> 7.15%<br>
+        <b>Meses mostrados:</b> ${mesesTotales}<br><br>`;
+
+    if (Object.keys(inversionesExtrasGuardadas).length > 0) {
+        resumen += "<b>Inversiones acumuladas:</b><br>";
+        for (let mes in inversionesExtrasGuardadas) {
+            resumen += `• Mes ${mes}: $${inversionesExtrasGuardadas[mes].toLocaleString()}<br>`;
+        }
+    }
+
+    resumen += `<br><b>Capital total actual:</b> $${capitalAcumuladoGlobal.toFixed(2).toLocaleString()}</div>`;
+
+    document.getElementById("resultado").innerHTML = tabla + resumen;
+}
+</script>
+
+</body>
+</html>
